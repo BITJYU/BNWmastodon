@@ -10,13 +10,6 @@ class Auth::AccountSwitchesController < ApplicationController
     stored_sessions = prune_inactive_account_sessions(session)
     target_session = find_account_session(session, target_id)
 
-    Rails.logger.info(
-      "[account_switch] current_account_id=#{current_user&.account_id} " \
-      "target_id=#{target_id} eligible=#{stored_sessions.map { |entry| entry['account_id'] }.inspect} " \
-      "target_session_present=#{target_session.present?} " \
-      "cookie_session_present=#{cookies.signed[:_session_id].present?}"
-    )
-
     if target_session.nil?
       render json: { error: 'unauthorized' }, status: :forbidden
       return

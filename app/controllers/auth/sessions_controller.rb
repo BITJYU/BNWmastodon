@@ -31,12 +31,6 @@ class Auth::SessionsController < Devise::SessionsController
       pending_stored_account_sessions
     )
 
-    Rails.logger.info(
-      "[account_switch_create] pending_session_accounts=#{Array(session[:pending_stored_account_sessions]).map { |entry| entry['account_id'] || entry[:account_id] }.inspect} " \
-      "pending_cookie_accounts=#{Array(cookies.signed[:pending_stored_account_sessions]).map { |entry| entry['account_id'] || entry[:account_id] }.inspect} " \
-      "preserved_accounts=#{preserved_sessions.map { |entry| entry['account_id'] }.inspect}"
-    )
-
     self.resource = authenticate_session_resource
     set_flash_message!(:notice, :signed_in)
     sign_in(resource_name, resource)
@@ -123,27 +117,14 @@ class Auth::SessionsController < Devise::SessionsController
 
   def preserve_existing_accounts_for_add_account
     return unless truthy_param?(:add_account)
-    unless current_user
-      Rails.logger.info('[add_account] skipped because current_user is nil')
-      return
-    end
+    return unless current_user
 
     current_session_id = current_session&.session_id || current_auth_session_id(session)
-    if current_session_id.blank?
-      Rails.logger.info('[add_account] skipped because current session id is nil')
-      return
-    end
+    return if current_session_id.blank?
 
     preserved_sessions = merge_account_sessions(
       stored_account_sessions(session),
       [account_session_payload(current_user, current_session_id)]
-    )
-
-    Rails.logger.info(
-      "[add_account] preserving account_ids=#{preserved_sessions.map { |entry| entry['account_id'] }.inspect} " \
-      "current_session_present=#{current_session_id.present?} " \
-      "cookie_session_present=#{cookies.signed[:_session_id].present?} " \
-      "session_pending_before=#{Array(session[:pending_stored_account_sessions]).map { |entry| entry['account_id'] || entry[:account_id] }.inspect}"
     )
 
     write_pending_stored_account_sessions(preserved_sessions)
@@ -180,17 +161,8 @@ class Auth::SessionsController < Devise::SessionsController
     return warden.authenticate!(auth_options) unless truthy_param?(:add_account)
 
     strategies = Devise.warden_config.default_strategies(scope: resource_name).uniq - [:session_activation_rememberable]
-    current_scope_user = warden.user(scope: resource_name, run_callbacks: false)
-
-    Rails.logger.info(
-      "[account_switch_create] add_account_auth_strategies=#{strategies.inspect} " \
-      "current_scope_user_before_clear=#{current_scope_user&.account_id.inspect}"
-    )
 
     clear_authenticated_user_scope(resource_name)
-    Rails.logger.info(
-      "[account_switch_create] current_scope_user_after_clear=#{warden.user(scope: resource_name, run_callbacks: false)&.account_id.inspect}"
-    )
     warden.authenticate!(*strategies, auth_options)
   end
 
@@ -226,13 +198,6 @@ class Auth::SessionsController < Devise::SessionsController
     write_auth_session_id(session, session_id) if session_id.present?
     write_stored_account_sessions(session, merged_sessions)
     clear_pending_stored_account_sessions
-    Rails.logger.info(
-      "[account_switch_login] user_account_id=#{user.account_id} " \
-      "stored_sessions_before=#{stored_sessions.map { |entry| entry['account_id'] }.inspect} " \
-      "stored_sessions_after=#{stored_account_sessions(session).map { |entry| entry['account_id'] }.inspect} " \
-      "session_present=#{session_id.present?} " \
-      "cookie_session_present=#{cookies.signed[:_session_id].present?}"
-    )
     flash.delete(:notice)
 
     LoginActivity.create(
