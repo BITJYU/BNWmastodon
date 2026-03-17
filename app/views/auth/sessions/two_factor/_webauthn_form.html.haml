@@ -1,0 +1,19 @@
+%p.flash-message.hidden#unsupported-browser-message= t 'webauthn_credentials.not_supported'
+%p.flash-message.alert.hidden#security-key-error-message= t 'webauthn_credentials.invalid_credential'
+
+- session_form_url = params[:add_account].present? ? session_path(resource_name, add_account: true) : session_path(resource_name)
+= simple_form_for(resource,
+                  as: resource_name,
+                  url: session_form_url,
+                  html: { method: :post, id: 'webauthn-form' }.merge(hidden ? { class: 'hidden' } : {})) do |f|
+  - if params[:add_account].present?
+    = hidden_field_tag :add_account, 'true'
+  %h3.title= t('simple_form.title.sessions.webauthn')
+  %p.hint= t('simple_form.hints.sessions.webauthn')
+
+  .actions
+    = f.button :button, t('auth.use_security_key'), class: 'js-webauthn', type: :submit
+
+  .form-footer
+    %p= t('auth.dont_have_your_security_key')
+    = link_to(t('auth.link_to_otp'), '#', id: 'link-to-otp')

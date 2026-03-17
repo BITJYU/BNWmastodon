@@ -1,0 +1,23 @@
+// ─── Inherit BNW dark theme ──────────────────────────────────────────────────
+// Uses @import to match the convention used by all other theme entry files
+// in this project (theme-ui-dark.scss, theme-ui-light.scss, etc.)
+@import 'theme-ui-dark';
+
+// ─── BNW image variables ─────────────────────────────────────────────────────
+:root {
+  --bnw-logo-url: url('../images/bnw/bnw-logo-dark.png');
+  --bnw-background-url: url('../images/bnw/bnw-background-dark.png');
+}
+
+// ─── Background image ────────────────────────────────────────────────────────
+body.app-body {
+  background-image: var(--bnw-background-url);
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+// ─── Logo image ──────────────────────────────────────────────────────────────
+.ui__header__logo img.logo {
+  content: var(--bnw-logo-url);
+}

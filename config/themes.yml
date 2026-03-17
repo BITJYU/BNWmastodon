@@ -1,0 +1,9 @@
+default: styles/theme-ui-light.scss
+theme-ui-dark: styles/theme-ui-dark.scss
+bird-ui-light: styles/bird-ui-light.scss
+bird-ui-dark: styles/bird-ui-dark.scss
+mastodon-light: styles/mastodon-light.scss
+mastodon-dark: styles/application.scss
+contrast: styles/contrast.scss
+bnw-dark: styles/bnw-dark.scss
+bnw-light: styles/bnw-light.scss

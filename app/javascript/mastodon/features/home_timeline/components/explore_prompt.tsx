@@ -1,0 +1,30 @@
+import { FormattedMessage } from 'react-intl';
+
+import { Link } from 'react-router-dom';
+
+import background from 'mastodon/../images/friends-cropped.png';
+import { DismissableBanner } from 'mastodon/components/dismissable_banner';
+
+export const ExplorePrompt = () => (
+  <DismissableBanner id='home.explore_prompt'>
+    <img
+      src={background}
+      alt=''
+      className='dismissable-banner__background-image'
+    />
+
+    <h1>
+      <FormattedMessage
+        id='home.explore_prompt.title'
+        defaultMessage='This is your home base within Mastodon.'
+      />
+    </h1>
+    <p>
+      <FormattedMessage
+        id='home.explore_prompt.body'
+        defaultMessage="Your home feed will have a mix of posts from the hashtags you've chosen to follow, the people you've chosen to follow, and the posts they boost. If that feels too quiet, you may want to:"
+      />
+    </p>
+
+  </DismissableBanner>
+);

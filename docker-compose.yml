@@ -1,0 +1,281 @@
+x-mastodon-app: &mastodon-app
+  build: .
+  image: bnw-mastodon:4.3.1
+  restart: always
+  env_file: .env.production
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  environment:
+    RAILS_ENV: production
+    NODE_ENV: production
+    DB_HOST: db
+    DB_PORT: 5432
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    REDIS_DB: 0
+    CACHE_REDIS_HOST: redis
+    CACHE_REDIS_PORT: 6379
+    CACHE_REDIS_DB: 1
+    SIDEKIQ_REDIS_HOST: redis
+    SIDEKIQ_REDIS_PORT: 6379
+    SIDEKIQ_REDIS_DB: 2
+  networks:
+    - internal_network
+
+services:
+  db:
+    restart: always
+    image: postgres:14-alpine
+    shm_size: 1gb
+    env_file: .env.production
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - |
+        export POSTGRES_USER="$${DB_USER:-mastodon}"
+        export POSTGRES_DB="$${DB_NAME:-mastodon_production}"
+        export POSTGRES_PASSWORD="$${DB_PASS:?DB_PASS must be set in .env.production}"
+        exec docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf
+    networks:
+      - internal_network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U "$${DB_USER:-mastodon}" -d "$${DB_NAME:-mastodon_production}" || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./postgres14:/var/lib/postgresql/data
+      - ./ops/postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+
+  redis:
+    restart: always
+    image: redis:7-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - internal_network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - ./redis:/data
+      - ./ops/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+
+  # es:
+  #   restart: always
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.17.4
+  #   environment:
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m -Des.enforce.bootstrap.checks=true"
+  #     - "xpack.license.self_generated.type=basic"
+  #     - "xpack.security.enabled=false"
+  #     - "xpack.watcher.enabled=false"
+  #     - "xpack.graph.enabled=false"
+  #     - "xpack.ml.enabled=false"
+  #     - "bootstrap.memory_lock=true"
+  #     - "cluster.name=es-mastodon"
+  #     - "discovery.type=single-node"
+  #     - "thread_pool.write.queue_size=1000"
+  #   networks:
+  #     - external_network
+  #     - internal_network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "curl --silent --fail localhost:9200/_cluster/health || exit 1"]
+  #   volumes:
+  #     - ./elasticsearch:/usr/share/elasticsearch/data
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #     nofile:
+  #       soft: 65536
+  #       hard: 65536
+  #   ports:
+  #     - '127.0.0.1:9200:9200'
+
+  web:
+    <<: *mastodon-app
+    command: bundle exec puma -C config/puma.rb
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      BIND: 0.0.0.0
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+      MAX_THREADS: 8
+      WEB_CONCURRENCY: 2
+      DB_POOL: 8
+    networks:
+      - external_network
+      - internal_network
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:3000/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - '127.0.0.1:3000:3000'
+    volumes:
+      - ./public/system:/mastodon/public/system
+
+  streaming:
+    <<: *mastodon-app
+    command: node ./streaming
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      BIND: 0.0.0.0
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+    networks:
+      - external_network
+      - internal_network
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q --spider --proxy=off localhost:4000/api/v1/streaming/health || exit 1']
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    ports:
+      - '127.0.0.1:4000:4000'
+
+  sidekiq-default:
+    <<: *mastodon-app
+    command: bundle exec sidekiq -q default,12 -q mailers,2 -q ingress,1
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+      SIDEKIQ_CONCURRENCY: 16
+      DB_POOL: 16
+    volumes:
+      - ./public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "pgrep -f \"sidekiq .* -q default,12 .* -q mailers,2 .* -q ingress,1\" >/dev/null || false"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  sidekiq-push:
+    <<: *mastodon-app
+    command: bundle exec sidekiq -q push,6
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+      SIDEKIQ_CONCURRENCY: 6
+      DB_POOL: 6
+    volumes:
+      - ./public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "pgrep -f \"sidekiq .* -q push,6\" >/dev/null || false"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  sidekiq-pull:
+    <<: *mastodon-app
+    command: bundle exec sidekiq -q pull
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+      SIDEKIQ_CONCURRENCY: 4
+      DB_POOL: 4
+    volumes:
+      - ./public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "pgrep -f \"sidekiq .* -q pull\" >/dev/null || false"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  sidekiq-scheduler:
+    <<: *mastodon-app
+    command: bundle exec sidekiq -q scheduler
+    environment:
+      RAILS_ENV: production
+      NODE_ENV: production
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      CACHE_REDIS_HOST: redis
+      CACHE_REDIS_PORT: 6379
+      CACHE_REDIS_DB: 1
+      SIDEKIQ_REDIS_HOST: redis
+      SIDEKIQ_REDIS_PORT: 6379
+      SIDEKIQ_REDIS_DB: 2
+      SIDEKIQ_CONCURRENCY: 2
+      DB_POOL: 2
+    volumes:
+      - ./public/system:/mastodon/public/system
+    healthcheck:
+      test: ['CMD-SHELL', "pgrep -f \"sidekiq .* -q scheduler\" >/dev/null || false"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  external_network:
+  internal_network:
+    internal: true
