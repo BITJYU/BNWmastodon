@@ -5,11 +5,13 @@ import { defineMessages, injectIntl } from 'react-intl';
 
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import DropdownMenuContainer from '../../../containers/dropdown_menu_container';
+import AccountSwitcher from '../../ui/components/account_switcher';
 
 const messages = defineMessages({
   edit_profile: { id: 'account.edit_profile', defaultMessage: 'Edit profile' },
   pins: { id: 'navigation_bar.pins', defaultMessage: 'Pinned posts' },
   directMessages: { id: 'navigation_bar.directMessages', defaultMessage: 'Direct Messages' },
+  switchAccounts: { id: 'account_switcher.switch_accounts', defaultMessage: 'Switch accounts' },
   preferences: { id: 'navigation_bar.preferences', defaultMessage: 'Preferences' },
   follow_requests: { id: 'navigation_bar.follow_requests', defaultMessage: 'Follow requests' },
   favourites: { id: 'navigation_bar.favourites', defaultMessage: 'Favorites' },
@@ -25,6 +27,11 @@ const messages = defineMessages({
 
 class ActionBar extends PureComponent {
 
+  state = {
+    accountSwitcherOpen: false,
+    accountSwitcherStyle: null,
+  };
+
   static propTypes = {
     account: ImmutablePropTypes.map.isRequired,
     onLogout: PropTypes.func.isRequired,
@@ -33,6 +40,38 @@ class ActionBar extends PureComponent {
 
   handleLogout = () => {
     this.props.onLogout();
+  };
+
+  closeAccountSwitcher = () => {
+    this.setState({ accountSwitcherOpen: false, accountSwitcherStyle: null });
+  };
+
+  handleAccountSwitcherAction = e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (this.state.accountSwitcherOpen) {
+      this.closeAccountSwitcher();
+      return;
+    }
+
+    const target = e.currentTarget;
+    const triggerRect = target.getBoundingClientRect();
+    const panelWidth = 300;
+    const panelHeight = 340;
+    const margin = 8;
+    const viewportHeight = window.innerHeight;
+
+    const left = Math.max(margin, triggerRect.left - panelWidth);
+    const top = Math.max(margin, Math.min(triggerRect.top, viewportHeight - panelHeight - margin));
+
+    this.setState({
+      accountSwitcherOpen: true,
+      accountSwitcherStyle: {
+        left: `${Math.round(left)}px`,
+        top: `${Math.round(top)}px`,
+      },
+    });
   };
 
   render () {
@@ -45,6 +84,11 @@ class ActionBar extends PureComponent {
     menu.push({ text: intl.formatMessage(messages.pins), to: '/pinned' });
     menu.push(null);
     menu.push({ text: intl.formatMessage(messages.directMessages), to:`/@${username}/direct_messages` });
+    menu.push({
+      text: intl.formatMessage(messages.switchAccounts),
+      action: this.handleAccountSwitcherAction,
+      keepOpen: true,
+    });
     menu.push(null);
     menu.push({ text: intl.formatMessage(messages.follow_requests), to: '/follow_requests' });
     menu.push({ text: intl.formatMessage(messages.favourites), to: '/favourites' });
@@ -64,6 +108,14 @@ class ActionBar extends PureComponent {
         <div className='compose__action-bar-dropdown'>
           <DropdownMenuContainer items={menu} icon='bars' size={18} direction='right' />
         </div>
+
+        {this.state.accountSwitcherOpen && (
+          <AccountSwitcher
+            variant='panel'
+            panelStyle={this.state.accountSwitcherStyle}
+            onClose={this.closeAccountSwitcher}
+          />
+        )}
       </div>
     );
   }

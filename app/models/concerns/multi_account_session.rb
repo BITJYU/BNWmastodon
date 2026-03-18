@@ -22,7 +22,7 @@ module MultiAccountSession
     session_sessions = Array(session[:stored_account_sessions])
     cookie_sessions = respond_to?(:cookies) ? Array(cookies.signed[STORED_ACCOUNT_SESSIONS_COOKIE]) : []
 
-    normalize_account_sessions(session_sessions + cookie_sessions)
+    normalize_account_sessions(cookie_sessions + session_sessions)
   end
 
   def write_stored_account_sessions(session, account_sessions)
@@ -43,7 +43,7 @@ module MultiAccountSession
     session_sessions = respond_to?(:session) ? Array(session[:pending_stored_account_sessions]) : []
     cookie_sessions = respond_to?(:cookies) ? Array(cookies.signed[PENDING_ACCOUNT_SESSIONS_COOKIE]) : []
 
-    normalize_account_sessions(session_sessions + cookie_sessions)
+    normalize_account_sessions(cookie_sessions + session_sessions)
   end
 
   def write_pending_stored_account_sessions(account_sessions)

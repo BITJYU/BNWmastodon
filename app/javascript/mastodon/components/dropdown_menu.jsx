@@ -37,6 +37,10 @@ class DropdownMenu extends PureComponent {
   };
 
   handleDocumentClick = e => {
+    if (e.target.closest('.account-switcher--portal')) {
+      return;
+    }
+
     if (this.node && !this.node.contains(e.target)) {
       this.props.onClose();
       e.stopPropagation();
@@ -241,15 +245,18 @@ export default class Dropdown extends PureComponent {
     const { onItemClick } = this.props;
     const i = Number(e.currentTarget.getAttribute('data-index'));
     const item = this.props.items[i];
+    const keepOpen = !!item?.keepOpen;
 
-    this.handleClose();
+    if (!keepOpen) {
+      this.handleClose();
+    }
 
     if (typeof onItemClick === 'function') {
       e.preventDefault();
       onItemClick(item, i);
     } else if (item && typeof item.action === 'function') {
       e.preventDefault();
-      item.action();
+      item.action(e);
     } else if (item && item.to) {
       e.preventDefault();
       this.context.router.history.push(item.to);

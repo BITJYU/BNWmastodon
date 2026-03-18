@@ -8,7 +8,7 @@ class Auth::AccountSwitchesController < ApplicationController
   def create
     target_id = switch_params[:account_id].to_i
     stored_sessions = prune_inactive_account_sessions(session)
-    target_session = find_account_session(session, target_id)
+    target_session = stored_sessions.find { |entry| entry['account_id'] == target_id }
 
     if target_session.nil?
       render json: { error: 'unauthorized' }, status: :forbidden
@@ -24,7 +24,9 @@ class Auth::AccountSwitchesController < ApplicationController
       return
     end
 
-    write_auth_session_id(session, target_session['session_id'])
+    stored_sessions = stored_sessions.reject { |entry| entry['account_id'] == target_id } << account_session_payload(target_user, target_activation.session_id)
+
+    write_auth_session_id(session, target_activation.session_id)
     sign_in(:user, target_user)
     write_stored_account_sessions(session, stored_sessions)
     render json: { ok: true }

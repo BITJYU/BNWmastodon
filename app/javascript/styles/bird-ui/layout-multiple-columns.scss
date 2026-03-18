@@ -1851,7 +1851,16 @@ body.embed .detailed-status__meta .detailed-status__link .fa-retweet,
 
 .layout-multiple-columns .notification.notification.notification-admin-sign-up .account__relationship,
 .layout-multiple-columns .notification.notification-follow .account__relationship {
-  transform: translateY(-8px);
+  transform: none;
+}
+
+.layout-multiple-columns .notification.notification.notification-admin-sign-up .account__wrapper,
+.layout-multiple-columns .notification.notification-follow .account__wrapper {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  min-width: 0;
+  width: 100%;
 }
 
 /* stylelint-disable-next-line */
