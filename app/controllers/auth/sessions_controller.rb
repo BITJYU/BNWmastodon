@@ -90,7 +90,9 @@ class Auth::SessionsController < Devise::SessionsController
   def after_sign_in_path_for(resource)
     last_url = stored_location_for(:user)
 
-    if home_paths(resource).include?(last_url)
+    if ['/deck/getting-started', '/getting-started'].include?(last_url)
+      '/home'
+    elsif home_paths(resource).include?(last_url)
       root_path
     else
       last_url || root_path
@@ -119,15 +121,21 @@ class Auth::SessionsController < Devise::SessionsController
     return unless truthy_param?(:add_account)
     return unless current_user
 
-    current_session_id = current_session&.session_id || current_auth_session_id(session)
-    return if current_session_id.blank?
+    preserved_session_id = current_user.activate_session(request)
+    return if preserved_session_id.blank?
 
     preserved_sessions = merge_account_sessions(
       stored_account_sessions(session),
-      [account_session_payload(current_user, current_session_id)]
+      [account_session_payload(current_user, preserved_session_id)]
     )
 
+    write_stored_account_sessions(session, preserved_sessions)
     write_pending_stored_account_sessions(preserved_sessions)
+
+    Rails.logger.info(
+      "[account_switcher] preserve_add_account current_account_id=#{current_user.account_id} " \
+      "preserved_account_ids=#{preserved_sessions.pluck('account_id').join(',')}"
+    )
   end
 
   def home_paths(resource)
@@ -199,6 +207,11 @@ class Auth::SessionsController < Devise::SessionsController
     write_stored_account_sessions(session, merged_sessions)
     clear_pending_stored_account_sessions
     flash.delete(:notice)
+
+    Rails.logger.info(
+      "[account_switcher] authentication_success user_account_id=#{user.account_id} " \
+      "stored_account_ids=#{merged_sessions.pluck('account_id').join(',')}"
+    )
 
     LoginActivity.create(
       user: user,

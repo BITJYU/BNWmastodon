@@ -19,6 +19,12 @@ class Api::V1::AccountSwitcherController < Api::BaseController
 
     cleanup_stale_entries(valid_entries) if valid_entries.length != raw_entries.length
 
+    Rails.logger.info(
+      "[account_switcher] api_show current_account_id=#{current_user.account_id} " \
+      "raw_account_ids=#{raw_entries.pluck('account_id').join(',')} " \
+      "live_account_ids=#{valid_entries.pluck('account_id').join(',')}"
+    )
+
     render json: {
       accounts: valid_entries.filter_map do |entry|
         user = users_by_id[entry['user_id']]

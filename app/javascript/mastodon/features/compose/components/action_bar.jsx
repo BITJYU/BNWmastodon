@@ -57,12 +57,17 @@ class ActionBar extends PureComponent {
 
     const target = e.currentTarget;
     const triggerRect = target.getBoundingClientRect();
-    const panelWidth = 300;
-    const panelHeight = 340;
+    const dropdownPanel =
+      target.closest('.dropdown-menu') ||
+      target.closest('[role="menu"]') ||
+      target.closest('.dropdown-menu__container');
+    const anchorRect = dropdownPanel ? dropdownPanel.getBoundingClientRect() : triggerRect;
+    const panelWidth = 220;
+    const panelHeight = 272;
     const margin = 8;
     const viewportHeight = window.innerHeight;
 
-    const left = Math.max(margin, triggerRect.left - panelWidth);
+    const left = Math.max(margin, anchorRect.left - panelWidth);
     const top = Math.max(margin, Math.min(triggerRect.top, viewportHeight - panelHeight - margin));
 
     this.setState({

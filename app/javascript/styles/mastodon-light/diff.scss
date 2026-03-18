@@ -202,10 +202,10 @@ html {
 
 .account-switcher__panel,
 .account-switcher__panel--floating {
-  background: darken($ui-base-color, 6%);
+  background: $white;
   border: 1px solid lighten($ui-base-color, 4%);
   border-radius: 8px;
-  box-shadow: var(--dropdown-shadow);
+  box-shadow: none;
 }
 
 .account-switcher__list {
@@ -214,13 +214,21 @@ html {
 
 .account-switcher__item {
   border-radius: 6px;
+  color: $darker-text-color;
 
   &:hover:not(:disabled) {
     background: lighten($ui-base-color, 4%);
   }
+
+  &:disabled {
+    background: transparent;
+    color: $darker-text-color;
+  }
 }
 
 .account-switcher__item-check {
+  background: $ui-highlight-color;
+  color: $white;
   border-color: $white;
 }
 

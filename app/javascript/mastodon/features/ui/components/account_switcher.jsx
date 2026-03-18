@@ -5,7 +5,6 @@ import { defineMessages, useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 import {
   getStoredAccounts,
-  removeStoredAccount,
   syncStoredAccountsAcrossTabs,
   updateUnreadCount,
   upsertStoredAccount,
@@ -22,19 +21,17 @@ const messages = defineMessages({
   logOutCurrent: { id: 'account_switcher.logout_current', defaultMessage: 'Log out @{acct}' },
 });
 
-const mergeAccountsWithLocalState = (accounts, cachedAccounts, hiddenAccountIds) => {
+const mergeAccountsWithLocalState = (accounts, cachedAccounts) => {
   const cachedAccountsById = new Map(cachedAccounts.map(account => [String(account.id), account]));
 
-  return accounts
-    .filter(account => !hiddenAccountIds.includes(String(account.id)))
-    .map(account => {
-      const cachedAccount = cachedAccountsById.get(String(account.id));
+  return accounts.map(account => {
+    const cachedAccount = cachedAccountsById.get(String(account.id));
 
-      return {
-        ...account,
-        unread_count: cachedAccount?.unread_count ?? 0,
-      };
-    });
+    return {
+      ...account,
+      unread_count: cachedAccount?.unread_count ?? 0,
+    };
+  });
 };
 
 const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
@@ -46,7 +43,6 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [storedAccounts, setStoredAccounts] = useState(() => getStoredAccounts());
   const [serverAccounts, setServerAccounts] = useState([]);
-  const [hiddenAccountIds, setHiddenAccountIds] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [loadErrorMessage, setLoadErrorMessage] = useState(null);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
@@ -110,6 +106,7 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
         if (!response.ok) throw new Error('failed to load account switcher accounts');
 
         const body = await response.json();
+
         if (!cancelled) {
           setServerAccounts(Array.isArray(body.accounts) ? body.accounts : []);
         }
@@ -134,11 +131,12 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
     };
 
     document.addEventListener('mousedown', handleMouseDown);
+
     return () => {
       cancelled = true;
       document.removeEventListener('mousedown', handleMouseDown);
     };
-  }, [isRenderedOpen, isPanelOnly, onClose]);
+  }, [isRenderedOpen]);
 
   useEffect(() => {
     if (!isRenderedOpen) return;
@@ -149,7 +147,7 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isRenderedOpen, isPanelOnly, onClose]);
+  }, [isRenderedOpen]);
 
   const handleSwitch = async targetId => {
     if (!currentId) return;
@@ -180,19 +178,11 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
     }
   };
 
-  const handleRemove = id => {
-    if (String(id) === String(currentId)) return;
+  const renderedAccounts = mergeAccountsWithLocalState(serverAccounts, storedAccounts);
 
-    removeStoredAccount(id);
-    setHiddenAccountIds(previousIds => (previousIds.includes(String(id)) ? previousIds : [...previousIds, String(id)]));
-    setStoredAccounts(previousAccounts => previousAccounts.filter(accountItem => String(accountItem.id) !== String(id)));
-    setServerAccounts(previousAccounts => previousAccounts.filter(accountItem => String(accountItem.id) !== String(id)));
-  };
-
-  const renderedAccounts = mergeAccountsWithLocalState(serverAccounts, storedAccounts, hiddenAccountIds);
   const panelMarkup = isRenderedOpen ? (
     <div
-      className={`account-switcher__panel${isPanelOnly ? ' account-switcher__panel--side account-switcher__panel--floating' : ''}`}
+      className={`account-switcher__panel${isPanelOnly ? ' account-switcher__panel--floating account-switcher__panel--menu' : ''}`}
       role='listbox'
       aria-label={switchAccountsLabel}
       style={isPanelOnly ? panelStyle : undefined}
@@ -204,7 +194,10 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
       ) : (
         <ul className='account-switcher__list'>
           {renderedAccounts.map(storedAccount => {
-            const isCurrentAccount = Boolean(storedAccount.current) || String(storedAccount.id) === String(currentId);
+            const isCurrentAccount =
+              Boolean(storedAccount.current) ||
+              String(storedAccount.id) === String(currentId) ||
+              String(storedAccount.acct) === String(currentAcct);
 
             return (
               <li key={storedAccount.id} className='account-switcher__item-row'>
@@ -216,11 +209,6 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
                 >
                   <div className='account-switcher__item-avatar-wrap'>
                     <img className='account-switcher__item-avatar' src={storedAccount.avatar} alt='' />
-                    {isCurrentAccount && (
-                      <span className='account-switcher__item-check' aria-label='Current account'>
-                        OK
-                      </span>
-                    )}
                   </div>
 
                   <div className='account-switcher__item-info'>
@@ -243,17 +231,9 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
                       {storedAccount.unread_count}
                     </span>
                   )}
-                </button>
 
-                {!isCurrentAccount && (
-                  <button
-                    className='account-switcher__item-remove'
-                    onClick={() => handleRemove(storedAccount.id)}
-                    aria-label={`Remove @${storedAccount.acct} from this list`}
-                  >
-                    x
-                  </button>
-                )}
+                  {isCurrentAccount && <span className='account-switcher__item-check' aria-label='Current account' />}
+                </button>
               </li>
             );
           })}
