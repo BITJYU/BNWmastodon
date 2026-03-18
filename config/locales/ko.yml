@@ -1705,10 +1705,10 @@ ko:
     default: 마스토돈 (기본 밝음)
     mastodon-light: 마스토돈 (밝음)
     mastodon-dark: 마스토돈 (어두움)
-    bird-ui-light: 파란새풍 테마 (밝음)
-    bird-ui-dark: 파란새풍 테마 (어두움)
-    bnw-dark: "BNW UI (Dark)"
-    bnw-light: "BNW UI (Light)"
+    bird-ui-light: Bird UI (밝음)
+    bird-ui-dark: Bird UI (어두움)
+    bnw-light: "BNW theme (Light)"
+    bnw-dark: "BNW theme (Dark)"
   time:
     formats:
       default: "%Y-%m-%d %H:%M"

@@ -15,6 +15,7 @@ import { Icon } from 'mastodon/components/icon';
 import ScrollableList from 'mastodon/components/scrollable_list';
 import Account from 'mastodon/containers/account_container';
 import Status from 'mastodon/containers/status_container';
+import { searchEnabled } from 'mastodon/initial_state';
 
 import { SearchSection } from './components/search_section';
 
@@ -53,6 +54,10 @@ const renderStatuses = statuses => hidePeek(statuses).map(id => (
 ));
 
 class Results extends PureComponent {
+
+  static contextTypes = {
+    identity: PropTypes.object,
+  };
 
   static propTypes = {
     results: ImmutablePropTypes.contains({
@@ -150,6 +155,7 @@ class Results extends PureComponent {
   render () {
     const { intl, isLoading, q, results } = this.props;
     const { type } = this.state;
+    const { signedIn } = this.context.identity;
 
     // We request 1 more result than we display so we can tell if there'd be a next page
     const hasMore = type !== 'all' ? results.get(type, ImmutableList()).size > INITIAL_PAGE_LIMIT && results.get(type).size % INITIAL_PAGE_LIMIT === 1 : false;
@@ -199,9 +205,9 @@ class Results extends PureComponent {
       <>
         <div className='account__section-headline'>
           <button onClick={this.handleSelectAll} className={type === 'all' ? 'active' : undefined}><FormattedMessage id='search_results.all' defaultMessage='All' /></button>
-          <button onClick={this.handleSelectAccounts} className={type === 'accounts' ? 'active' : undefined}><FormattedMessage id='search_results.accounts' defaultMessage='Profiles' /></button>
+          {signedIn && <button onClick={this.handleSelectAccounts} className={type === 'accounts' ? 'active' : undefined}><FormattedMessage id='search_results.accounts' defaultMessage='Profiles' /></button>}
           <button onClick={this.handleSelectHashtags} className={type === 'hashtags' ? 'active' : undefined}><FormattedMessage id='search_results.hashtags' defaultMessage='Hashtags' /></button>
-          <button onClick={this.handleSelectStatuses} className={type === 'statuses' ? 'active' : undefined}><FormattedMessage id='search_results.statuses' defaultMessage='Posts' /></button>
+          {searchEnabled && signedIn && <button onClick={this.handleSelectStatuses} className={type === 'statuses' ? 'active' : undefined}><FormattedMessage id='search_results.statuses' defaultMessage='Posts' /></button>}
         </div>
 
         <div className='explore__search-results' data-nosnippet>

@@ -92,7 +92,8 @@ class Search extends PureComponent {
 
   handleKeyDown = (e) => {
     const { selectedOption } = this.state;
-    const options = searchEnabled ? this._getOptions().concat(this.defaultOptions) : this._getOptions();
+    const { signedIn } = this.context.identity;
+    const options = searchEnabled && signedIn ? this._getOptions().concat(this.defaultOptions) : this._getOptions();
 
     switch(e.key) {
     case 'Escape':
@@ -174,7 +175,7 @@ class Search extends PureComponent {
     const { router } = this.context;
     const { value, onClickSearchResult } = this.props;
 
-    const query = value.trim().replace(/^@/, '');
+    const query = value.trim().replace(/^@/, '').split('@')[0];
 
     router.history.push(`/@${query}`);
     onClickSearchResult(query, 'account');
@@ -187,10 +188,6 @@ class Search extends PureComponent {
 
     onOpenURL(value, router.history);
     this._unfocus();
-  };
-
-  handleStatusSearch = () => {
-    this._submit('statuses');
   };
 
   handleAccountSearch = () => {
@@ -238,6 +235,13 @@ class Search extends PureComponent {
   _submit (type) {
     const { onSubmit, openInRoute, value, onClickSearchResult } = this.props;
     const { router } = this.context;
+    const { signedIn } = this.context.identity;
+    const trimmedValue = value.trim();
+
+    if (!type && signedIn && trimmedValue.startsWith('https://') && !trimmedValue.includes(' ')) {
+      this.handleURLClick();
+      return;
+    }
 
     onSubmit(type);
 
@@ -276,6 +280,7 @@ class Search extends PureComponent {
   _calculateOptions (value) {
     const trimmedValue = value.trim();
     const options = [];
+    const { signedIn } = this.context.identity;
 
     if (trimmedValue.length > 0) {
       const couldBeURL = trimmedValue.startsWith('https://') && !trimmedValue.includes(' ');
@@ -290,19 +295,17 @@ class Search extends PureComponent {
         options.push({ key: 'go-to-hashtag', label: <FormattedMessage id='search.quick_action.go_to_hashtag' defaultMessage='Go to hashtag {x}' values={{ x: <mark>#{trimmedValue.replace(/^#/, '')}</mark> }} />, action: this.handleHashtagClick });
       }
 
-      const couldBeUsername = trimmedValue.match(/^@?[a-z0-9_-]+(@[^\s]+)?$/i);
+      const normalizedAccount = trimmedValue.replace(/^@/, '');
+      const explicitDomain = normalizedAccount.includes('@') ? normalizedAccount.split('@').slice(1).join('@') : null;
+      const normalizedExplicitDomain = explicitDomain ? explicitDomain.toLowerCase().replace(/:\d+$/, '') : null;
+      const normalizedLocalDomain = domain.toLowerCase().replace(/:\d+$/, '');
+      const couldBeUsername = signedIn && trimmedValue.match(/^@?[a-z0-9_-]+(@[^\s]+)?$/i) && (!normalizedExplicitDomain || normalizedExplicitDomain === normalizedLocalDomain);
 
       if (couldBeUsername) {
         options.push({ key: 'go-to-account', label: <FormattedMessage id='search.quick_action.go_to_account' defaultMessage='Go to profile {x}' values={{ x: <mark>@{trimmedValue.replace(/^@/, '')}</mark> }} />, action: this.handleAccountClick });
       }
 
-      const couldBeStatusSearch = searchEnabled;
-
-      if (couldBeStatusSearch) {
-        options.push({ key: 'status-search', label: <FormattedMessage id='search.quick_action.status_search' defaultMessage='Posts matching {x}' values={{ x: <mark>{trimmedValue}</mark> }} />, action: this.handleStatusSearch });
-      }
-
-      const couldBeUserSearch = true;
+      const couldBeUserSearch = signedIn;
 
       if (couldBeUserSearch) {
         options.push({ key: 'account-search', label: <FormattedMessage id='search.quick_action.account_search' defaultMessage='Profiles matching {x}' values={{ x: <mark>{trimmedValue}</mark> }} />, action: this.handleAccountSearch });
@@ -375,7 +378,7 @@ class Search extends PureComponent {
 
           <h4><FormattedMessage id='search_popout.options' defaultMessage='Search options' /></h4>
 
-          {searchEnabled ? (
+          {searchEnabled && signedIn ? (
             <div className='search__popout__menu'>
               {this.defaultOptions.map(({ key, label, action }, i) => (
                 <button key={key} onMouseDown={action} className={classNames('search__popout__menu__item', { selected: selectedOption === ((options.length || recent.size) + i) })}>

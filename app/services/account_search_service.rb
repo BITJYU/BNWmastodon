@@ -170,6 +170,8 @@ class AccountSearchService < BaseService
 
     match = if options[:resolve]
               ResolveAccountService.new.call(query)
+            elsif options[:local_only]
+              (query_domain.nil? || domain_is_local?) ? Account.find_local(query_username) : nil
             elsif domain_is_local?
               Account.find_local(query_username)
             else
@@ -185,7 +187,7 @@ class AccountSearchService < BaseService
     return [] if limit_for_non_exact_results.zero?
 
     @search_results ||= begin
-      results = from_elasticsearch if Chewy.enabled?
+      results = from_elasticsearch if Chewy.enabled? && !options[:local_only]
       results ||= from_database
       results
     end
@@ -200,11 +202,11 @@ class AccountSearchService < BaseService
   end
 
   def advanced_search_results
-    Account.advanced_search_for(terms_for_query, account, limit: limit_for_non_exact_results, following: options[:following], offset: offset)
+    Account.advanced_search_for(terms_for_query, account, limit: limit_for_non_exact_results, following: options[:following], offset: offset, local_only: options[:local_only])
   end
 
   def simple_search_results
-    Account.search_for(terms_for_query, limit: limit_for_non_exact_results, offset: offset)
+    Account.search_for(terms_for_query, limit: limit_for_non_exact_results, offset: offset, local_only: options[:local_only])
   end
 
   def from_elasticsearch

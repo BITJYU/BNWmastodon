@@ -1733,12 +1733,12 @@ en:
   themes:
      contrast: Mastodon (High contrast)
      default: Mastodon (Default light)
-     bird-ui-light: Mastodon Bird UI (Light)
-     bird-ui-dark: Mastodon Bird UI (dark)
+     bird-ui-light: Bird UI (Light)
+     bird-ui-dark: Bird UI (Dark)
      mastodon-light: Mastodon (Light)
      mastodon-dark: Mastodon (Dark)
-     bnw-dark: "BNW UI (Dark)"
-     bnw-light: "BNW UI (Light)"
+     bnw-light: "BNW theme (Light)"
+     bnw-dark: "BNW theme (Dark)"
   time:
     formats:
       default: "%b %d, %Y, %H:%M"

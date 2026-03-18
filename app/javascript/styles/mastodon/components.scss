@@ -9770,14 +9770,9 @@ noscript {
   border: 2px solid var(--dropdown-background-color);
 }
 
-.account-switcher__item-check::before {
-  content: '\2713';
-}
-
-.account-switcher__item-check-mark {
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
+.account-switcher__item-check-icon {
+  width: 12px;
+  height: 12px;
 }
 
 .account-switcher__item-info {

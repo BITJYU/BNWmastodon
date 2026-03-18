@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { defineMessages, useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
+import { Icon } from '../../../components/icon';
 import {
   getStoredAccounts,
   syncStoredAccountsAcrossTabs,
@@ -232,7 +233,11 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
                     </span>
                   )}
 
-                  {isCurrentAccount && <span className='account-switcher__item-check' aria-label='Current account' />}
+                  {isCurrentAccount && (
+                    <span className='account-switcher__item-check' aria-label='Current account'>
+                      <Icon id='check' className='account-switcher__item-check-icon' />
+                    </span>
+                  )}
                 </button>
               </li>
             );

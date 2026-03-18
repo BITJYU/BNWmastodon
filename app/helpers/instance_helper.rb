@@ -2,7 +2,7 @@
 
 module InstanceHelper
   def site_title
-    Setting.site_title
+    'Blooming Nest Woods'
   end
 
   def site_hostname

@@ -39,7 +39,7 @@ class InstancePresenter < ActiveModelSerializers::Model
   end
 
   def title
-    Setting.site_title
+    'Blooming Nest Woods'
   end
 
   def languages

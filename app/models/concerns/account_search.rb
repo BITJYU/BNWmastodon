@@ -106,6 +106,8 @@ module AccountSearch
     LIMIT :limit OFFSET :offset
   SQL
 
+  LOCAL_ONLY_SQL = 'AND accounts.domain IS NULL'
+
   def searchable_text
     PlainTextFormatter.new(note, local?).to_s if discoverable?
   end
@@ -118,17 +120,17 @@ module AccountSearch
   end
 
   class_methods do
-    def search_for(terms, limit: 10, offset: 0)
+    def search_for(terms, limit: 10, offset: 0, local_only: false)
       tsquery = generate_query_for_search(terms)
 
-      find_by_sql([BASIC_SEARCH_SQL, { limit: limit, offset: offset, tsquery: tsquery }]).tap do |records|
+      find_by_sql([sql_for_basic_search(local_only: local_only), { limit: limit, offset: offset, tsquery: tsquery }]).tap do |records|
         ActiveRecord::Associations::Preloader.new(records: records, associations: :account_stat)
       end
     end
 
-    def advanced_search_for(terms, account, limit: 10, following: false, offset: 0)
+    def advanced_search_for(terms, account, limit: 10, following: false, offset: 0, local_only: false)
       tsquery = generate_query_for_search(terms)
-      sql_template = following ? ADVANCED_SEARCH_WITH_FOLLOWING : ADVANCED_SEARCH_WITHOUT_FOLLOWING
+      sql_template = following ? sql_for_advanced_search_with_following(local_only: local_only) : sql_for_advanced_search_without_following(local_only: local_only)
 
       find_by_sql([sql_template, { id: account.id, limit: limit, offset: offset, tsquery: tsquery }]).tap do |records|
         ActiveRecord::Associations::Preloader.new(records: records, associations: :account_stat)
@@ -136,6 +138,24 @@ module AccountSearch
     end
 
     private
+
+    def sql_for_basic_search(local_only: false)
+      return BASIC_SEARCH_SQL unless local_only
+
+      BASIC_SEARCH_SQL.sub('ORDER BY rank DESC', "#{LOCAL_ONLY_SQL}\n    ORDER BY rank DESC")
+    end
+
+    def sql_for_advanced_search_with_following(local_only: false)
+      return ADVANCED_SEARCH_WITH_FOLLOWING unless local_only
+
+      ADVANCED_SEARCH_WITH_FOLLOWING.sub('GROUP BY accounts.id, s.id', "#{LOCAL_ONLY_SQL}\n    GROUP BY accounts.id, s.id")
+    end
+
+    def sql_for_advanced_search_without_following(local_only: false)
+      return ADVANCED_SEARCH_WITHOUT_FOLLOWING unless local_only
+
+      ADVANCED_SEARCH_WITHOUT_FOLLOWING.sub('GROUP BY accounts.id, s.id', "#{LOCAL_ONLY_SQL}\n    GROUP BY accounts.id, s.id")
+    end
 
     def generate_query_for_search(unsanitized_terms)
       terms = unsanitized_terms.gsub(DISALLOWED_TSQUERY_CHARACTERS, ' ')

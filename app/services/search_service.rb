@@ -36,6 +36,7 @@ class SearchService < BaseService
       offset: @offset,
       use_searchable_text: true,
       following: @following,
+      local_only: @options[:local_only],
       start_with_hashtag: @query.start_with?('#')
     )
   end
@@ -46,6 +47,7 @@ class SearchService < BaseService
       @account,
       limit: @limit,
       offset: @offset,
+      local_only: @options[:local_only],
       account_id: @options[:account_id],
       min_id: @options[:min_id],
       max_id: @options[:max_id]
@@ -82,11 +84,14 @@ class SearchService < BaseService
   end
 
   def status_searchable?
-    Chewy.enabled? && status_search? && @account.present?
+    # Local post search is intentionally parked for now.
+    # Keep the original indexed post-search path only, so signed-in local-only
+    # searches continue to expose profiles without opening a DB-heavy status path.
+    Chewy.enabled? && status_search? && @account.present? && !@options[:local_only]
   end
 
   def account_searchable?
-    account_search?
+    account_search? && @account.present?
   end
 
   def hashtag_searchable?

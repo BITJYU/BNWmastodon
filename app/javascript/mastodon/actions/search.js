@@ -49,7 +49,8 @@ export function submitSearch(type) {
     api(getState).get('/api/v2/search', {
       params: {
         q: value,
-        resolve: signedIn,
+        resolve: false,
+        local_only: signedIn,
         limit: 11,
         type,
       },
@@ -96,6 +97,7 @@ export function fetchSearchFail(error) {
 export const expandSearch = type => (dispatch, getState) => {
   const value  = getState().getIn(['search', 'value']);
   const offset = getState().getIn(['search', 'results', type]).size - 1;
+  const signedIn = !!getState().getIn(['meta', 'me']);
 
   dispatch(expandSearchRequest(type));
 
@@ -104,6 +106,7 @@ export const expandSearch = type => (dispatch, getState) => {
       q: value,
       type,
       offset,
+      local_only: signedIn,
       limit: 11,
     },
   }).then(({ data }) => {

@@ -24,9 +24,13 @@ class Api::V2::SearchController < Api::BaseController
 
     return if user_signed_in?
 
-    return render json: { error: 'Search queries pagination is not supported without authentication' }, status: 401 if params[:offset].present?
+    return render json: { error: 'Search queries pagination is not supported without authentication' }, status: 401 if params[:offset].present? && !public_hashtag_pagination?
 
     render json: { error: 'Search queries that resolve remote resources are not supported without authentication' }, status: 401 if truthy_param?(:resolve)
+  end
+
+  def public_hashtag_pagination?
+    params[:type] == 'hashtags'
   end
 
   def search_results
@@ -34,11 +38,11 @@ class Api::V2::SearchController < Api::BaseController
       params[:q],
       current_account,
       limit_param(RESULTS_LIMIT),
-      search_params.merge(resolve: truthy_param?(:resolve), exclude_unreviewed: truthy_param?(:exclude_unreviewed), following: truthy_param?(:following))
+      search_params.merge(resolve: truthy_param?(:resolve), exclude_unreviewed: truthy_param?(:exclude_unreviewed), following: truthy_param?(:following), local_only: truthy_param?(:local_only))
     )
   end
 
   def search_params
-    params.permit(:type, :offset, :min_id, :max_id, :account_id, :following)
+    params.permit(:type, :offset, :min_id, :max_id, :account_id, :following, :local_only)
   end
 end
