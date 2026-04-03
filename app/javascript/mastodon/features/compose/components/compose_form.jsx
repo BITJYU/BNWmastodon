@@ -366,7 +366,7 @@ class ComposeForm extends ImmutablePureComponent {
             </div>
 
             <div className='character-counter__wrapper'>
-              <CharacterCounter max={1000} text={this.getFulltextForCharacterCounting()} />
+              {this.props.privacy !== 'direct' && <CharacterCounter max={500} text={this.getFulltextForCharacterCounting()} />}
             </div>
           </div>
         </div>
