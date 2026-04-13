@@ -16,7 +16,7 @@ defaults: &defaults
   show_staff_badge: true
   preview_sensitive_media: false
   noindex: true
-  theme: 'mastodon-light'
+  theme: 'bnw-light'
   trends: false
   trends_as_landing_page: false
   trendable_by_default: false

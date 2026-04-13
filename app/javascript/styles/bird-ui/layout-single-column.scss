@@ -759,6 +759,18 @@ body.layout-single-column {
   border: 1px solid var(--color-dark);
 }
 
+/* Light background override for dismissable/warning banners */
+.layout-single-column .dismissable-banner,
+.layout-single-column .warning-banner,
+.layout-single-column .follow-request-banner,
+.layout-single-column .moved-account-banner,
+.layout-single-column .account-memorial-banner,
+.layout-single-column .follow_requests-unlocked_explanation {
+  background-color: var(--color-bg-75) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-fg) !important;
+}
+
 /* More subtle box-shadow for dropdown-menu */
 .layout-single-column .search-popout,
 .layout-single-column .search__popout,

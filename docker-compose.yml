@@ -131,6 +131,9 @@ services:
       - '127.0.0.1:3000:3000'
     volumes:
       - ./public/system:/mastodon/public/system
+      - ./public/assets:/mastodon/public/assets
+      - ./public/avatars:/mastodon/public/avatars
+      - ./public/headers:/mastodon/public/headers
 
   streaming:
     <<: *mastodon-app

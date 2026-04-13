@@ -42,7 +42,7 @@ class ServerBanner extends PureComponent {
     return (
       <div className='server-banner'>
         <div className='server-banner__introduction'>
-          <FormattedMessage id='server_banner.introduction' defaultMessage='{domain} is part of the decentralized social network powered by {mastodon}.' values={{ title: <strong>{title}</strong>, BNW: <a href='https://github.com/BITJYU/BNWmastodon' target='_blank' rel='noreferrer'>BNW</a> }} />
+          <FormattedMessage id='server_banner.introduction' defaultMessage='{domain} is part of the decentralized social network powered by {mastodon}.' values={{ title: <strong>{title}</strong>, BNW: <a href='https://github.com/whippyshou/mastodon' target='_blank' rel='noreferrer'>휘핑 에디션</a> }} />
         </div>
 
         <ServerHeroImage blurhash={server.getIn(['thumbnail', 'blurhash'])} src={server.getIn(['thumbnail', 'url'])} className='server-banner__hero' />
