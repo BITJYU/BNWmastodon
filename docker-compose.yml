@@ -115,9 +115,9 @@ services:
       SIDEKIQ_REDIS_HOST: redis
       SIDEKIQ_REDIS_PORT: 6379
       SIDEKIQ_REDIS_DB: 2
-      MAX_THREADS: 8
-      WEB_CONCURRENCY: 2
-      DB_POOL: 8
+      MAX_THREADS: 5
+      WEB_CONCURRENCY: 1
+      DB_POOL: 5
     networks:
       - external_network
       - internal_network
@@ -183,8 +183,8 @@ services:
       SIDEKIQ_REDIS_HOST: redis
       SIDEKIQ_REDIS_PORT: 6379
       SIDEKIQ_REDIS_DB: 2
-      SIDEKIQ_CONCURRENCY: 16
-      DB_POOL: 16
+      SIDEKIQ_CONCURRENCY: 5
+      DB_POOL: 5
     volumes:
       - ./public/system:/mastodon/public/system
     healthcheck:
@@ -211,8 +211,8 @@ services:
       SIDEKIQ_REDIS_HOST: redis
       SIDEKIQ_REDIS_PORT: 6379
       SIDEKIQ_REDIS_DB: 2
-      SIDEKIQ_CONCURRENCY: 6
-      DB_POOL: 6
+      SIDEKIQ_CONCURRENCY: 2
+      DB_POOL: 2
     volumes:
       - ./public/system:/mastodon/public/system
     healthcheck:
@@ -239,8 +239,8 @@ services:
       SIDEKIQ_REDIS_HOST: redis
       SIDEKIQ_REDIS_PORT: 6379
       SIDEKIQ_REDIS_DB: 2
-      SIDEKIQ_CONCURRENCY: 4
-      DB_POOL: 4
+      SIDEKIQ_CONCURRENCY: 1
+      DB_POOL: 1
     volumes:
       - ./public/system:/mastodon/public/system
     healthcheck:
@@ -267,8 +267,8 @@ services:
       SIDEKIQ_REDIS_HOST: redis
       SIDEKIQ_REDIS_PORT: 6379
       SIDEKIQ_REDIS_DB: 2
-      SIDEKIQ_CONCURRENCY: 2
-      DB_POOL: 2
+      SIDEKIQ_CONCURRENCY: 1
+      DB_POOL: 1
     volumes:
       - ./public/system:/mastodon/public/system
     healthcheck:

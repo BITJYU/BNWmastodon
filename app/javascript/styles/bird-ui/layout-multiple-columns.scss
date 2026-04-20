@@ -1875,6 +1875,11 @@ body.embed .detailed-status__meta .detailed-status__link .fa-retweet,
   width: 100%;
 }
 
+/* Fix: follow notification text overlaps unfollow button */
+.layout-multiple-columns .notification.notification-follow .account__wrapper {
+  margin-top: calc(var(--size-avatar-small) + var(--gap-default));
+}
+
 /* stylelint-disable-next-line */
 .layout-multiple-columns .notification.notification-follow .account__avatar-wrapper {
   top: 6px;

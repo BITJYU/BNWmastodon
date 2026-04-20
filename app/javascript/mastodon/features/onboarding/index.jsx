@@ -11,7 +11,7 @@ import { connect } from 'react-redux';
 
 import { debounce } from 'lodash';
 
-import illustration from 'mastodon/../images/rabbit_ui_conversation.png';
+import illustration from 'mastodon/../images/bnw/logo_light.png';
 import { fetchAccount } from 'mastodon/actions/accounts';
 import { focusCompose } from 'mastodon/actions/compose';
 import { closeOnboarding } from 'mastodon/actions/onboarding';

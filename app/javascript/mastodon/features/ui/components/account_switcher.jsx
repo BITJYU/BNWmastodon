@@ -270,7 +270,7 @@ const AccountSwitcher = ({ variant = 'default', onClose, panelStyle }) => {
           {intl.formatMessage(messages.addAccount)}
         </a>
         <a
-          href='/auth/sign_out'
+          href='/auth/account/switch'
           className='account-switcher__footer-link account-switcher__footer-link--logout'
           data-method='delete'
         >
