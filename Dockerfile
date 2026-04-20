@@ -85,6 +85,7 @@ RUN apt-get update && \
 
 COPY --chown=mastodon:mastodon . /opt/mastodon
 COPY --chown=mastodon:mastodon --from=build /opt/mastodon /opt/mastodon
+RUN chmod +x /opt/mastodon/bin/*
 
 ENV RAILS_ENV="production" \
     NODE_ENV="production" \
