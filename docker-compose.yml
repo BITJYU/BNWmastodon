@@ -185,6 +185,9 @@ services:
       SIDEKIQ_REDIS_DB: 2
       SIDEKIQ_CONCURRENCY: 5
       DB_POOL: 5
+    networks:
+      - external_network
+      - internal_network
     volumes:
       - ./public/system:/mastodon/public/system
     healthcheck:
